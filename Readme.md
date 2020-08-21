@@ -9,13 +9,13 @@ Homepage: https://github.com/mjbogusz/rpi-kernel-builder
 Basic usage (RPi4, regular up-to-date build):
 ```sh
 docker pull mjbogusz/rpi-kernel-builder:latest
-docker run rpi-kernel-builder:latest --name=rpi-kernel
-docker cp "rpi-kernel:/*.deb" ./
+docker run --name=rpi-kernel mjbogusz/rpi-kernel-builder:latest
+docker cp "rpi-kernel:/packages" ./
 ```
 
 For more options see
 ```sh
-docker run rpi-kernel-builder:latest --help
+docker run mjbogusz/rpi-kernel-builder:latest --help
 ```
 
 # TODO:

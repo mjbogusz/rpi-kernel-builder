@@ -102,3 +102,4 @@ cd /linux
 # make -j`nproc`
 # KPKG build (build and create DEBs)
 make-kpkg -j`nproc` kernel_image kernel_headers kernel_source
+cp /*.deb /packages/
