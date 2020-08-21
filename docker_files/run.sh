@@ -75,11 +75,13 @@ if [ "$ARM64" = true ]; then
 	export ARCH=arm64
 	export KPKG_ARCH=arm64
 	export CROSS_COMPILE=aarch64-linux-gnu-
+	export CC=${CROSS_COMPILE}gcc
 	export $(dpkg-architecture -a arm64)
 else
 	export ARCH=arm
 	export KPKG_ARCH=arm
 	export CROSS_COMPILE=arm-linux-gnueabihf-
+	export CC=${CROSS_COMPILE}gcc
 	export $(dpkg-architecture -a armhf)
 fi
 cd /linux
@@ -99,5 +101,4 @@ cd /linux
 # Plain build (disabled)
 # make -j`nproc`
 # KPKG build (build and create DEBs)
-MAKEFLAGS="CC=${CROSS_COMPILE}gcc"
 make-kpkg -j`nproc` kernel_image kernel_headers kernel_source
