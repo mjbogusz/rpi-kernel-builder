@@ -11,6 +11,8 @@ print_help() {
 	/bin/echo -e "\t (--rt|--realtime) build an RT version (default: build a non-RT version"
 	/bin/echo -e "\t (--rt-patch|--rtpatch|--realtime-patch PATCHSET) use the specified realtime PATCHSET (default: '5.4.58-rt35')"
 	/bin/echo -e "\t (--branch BRANCHNAME) use the BRANCHNAME branch from https://github.com/raspberrypi/linux (default: rpi-5.4.y)"
+	/bin/echo -e "\t (--revision REVISION) package version revision (default: 1)"
+	/bin/echo -e "\t (--version-append APPEND) string to append to the kernel version (default: \"\")"
 	# /bin/echo -e "\t "
 }
 
@@ -18,8 +20,10 @@ print_help() {
 FULL_CLONE=false
 ARM64=false
 RT=false
-RT_PATCH="5.4.58-rt35"
+RT_PATCH="5.4.59-rt36"
 BRANCH="rpi-5.4.y"
+REVISION="1"
+APPEND=""
 
 while [ "$#" -gt 0 ]; do
 	case $1 in
@@ -47,6 +51,14 @@ while [ "$#" -gt 0 ]; do
 			BRANCH="$2"
 			shift 2
 		;;
+		--revision)
+			REVISION="$2"
+			shift 2
+		;;
+		--version-append)
+			APPEND="$2"
+			shift 2
+		;;
 		*)
 			echo "Unknown option: $1"
 			print_help
@@ -61,11 +73,13 @@ if [ "$FULL_CLONE" = true ]; then
 else
 	git clone --single-branch --depth=1 https://github.com/raspberrypi/linux.git -b $BRANCH
 fi
+# Remove the .git directory (it causes make-kpkg to include an extraneous '+' in the package name)
+rm -rf linux/.git
 
 # Optionally: Download and apply the RT patchset
 if [ "$RT" = true ]; then
-	patch_branch=$(echo "5.4.58-rt35" | cut -c 1-3)
-	wget "http://cdn.kernel.org/pub/linux/kernel/projects/rt/${patch_branch}/patch-${RT_PATCH}.patch.gz" -O /linux-rt.patch.gz
+	patch_branch=$(echo ${RT_PATCH} | cut -c 1-3)
+	wget "http://cdn.kernel.org/pub/linux/kernel/projects/rt/${patch_branch}/older/patch-${RT_PATCH}.patch.gz" -O /linux-rt.patch.gz
 	cd /linux
 	gzip -cd /linux-rt.patch.gz | patch -p1 --verbose
 fi
@@ -101,5 +115,5 @@ cd /linux
 # Plain build (disabled)
 # make -j`nproc`
 # KPKG build (build and create DEBs)
-make-kpkg -j`nproc` kernel_image kernel_headers kernel_source
+make-kpkg -j`nproc` --revision="${REVISION}" --append-to-version="${APPEND}" kernel_image kernel_headers kernel_source
 cp /*.deb /packages/
