@@ -2,9 +2,28 @@ from ubuntu:20.04
 
 MAINTAINER mjbogusz
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND="noninteractive"
 
-RUN apt update && apt install -y git-core kernel-package gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf build-essential libncurses-dev bc u-boot-tools wget unzip bison flex kernel-package libssl-dev rsync
+ARG NO_APT_CACHE=0
+RUN apt -q update \
+	&& apt upgrade -qy \
+	&& apt install -qy \
+		bc \
+		bison \
+		build-essential \
+		flex \
+		gcc-aarch64-linux-gnu \
+		gcc-arm-linux-gnueabihf \
+		git-core \
+		kernel-package \
+		kernel-package \
+		libncurses-dev \
+		libssl-dev \
+		rsync \
+		u-boot-tools \
+		unzip \
+		wget \
+	&& rm -rf /var/lib/apt/lists/*
 
 COPY docker_files/run.sh /run.sh
 COPY docker_files/linux_rt.config /linux_rt.config

@@ -20,8 +20,8 @@ print_help() {
 FULL_CLONE=false
 ARM64=false
 RT=false
-RT_PATCH="5.4.59-rt36"
-BRANCH="rpi-5.4.y"
+RT_PATCH="5.10.47-rt45"
+BRANCH="rpi-5.10.y"
 REVISION="1"
 APPEND=""
 
@@ -78,7 +78,7 @@ rm -rf linux/.git
 
 # Optionally: Download and apply the RT patchset
 if [ "$RT" = true ]; then
-	patch_branch=$(echo ${RT_PATCH} | cut -c 1-3)
+	patch_branch=$(echo ${RT_PATCH} | cut -d . -f 1-2 )
 	wget "http://cdn.kernel.org/pub/linux/kernel/projects/rt/${patch_branch}/older/patch-${RT_PATCH}.patch.gz" -O /linux-rt.patch.gz
 	cd /linux
 	gzip -cd /linux-rt.patch.gz | patch -p1 --verbose
@@ -115,5 +115,9 @@ cd /linux
 # Plain build (disabled)
 # make -j`nproc`
 # KPKG build (build and create DEBs)
-make-kpkg -j`nproc` --revision="${REVISION}" --append-to-version="${APPEND}" kernel_image kernel_headers kernel_source
+KPKG_ARGS="-j`nproc` --revision=${REVISION}"
+if [ -n "${APPEND}" ]; then
+	KPKG_ARGS="${KPKG_ARGS} --append-to-version=${APPEND}"
+fi
+make-kpkg ${KPKG_ARGS} kernel_image kernel_headers kernel_source
 cp /*.deb /packages/
