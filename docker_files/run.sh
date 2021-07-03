@@ -67,7 +67,8 @@ while [ "$#" -gt 0 ]; do
 	esac
 done
 
-# Get the sources
+# Stage 1: Get the sources
+echo -e "\n######\n Stage 1/4: retrieving the Linux source\n######\n"
 if [ "$FULL_CLONE" = true ]; then
 	git clone https://github.com/raspberrypi/linux.git -b $BRANCH
 else
@@ -76,15 +77,17 @@ fi
 # Remove the .git directory (it causes make-kpkg to include an extraneous '+' in the package name)
 rm -rf linux/.git
 
-# Optionally: Download and apply the RT patchset
+# Stage 1.1: (Optionally) Download and apply the RT patchset
+echo -e "\n######\n Stage 1.1/4: retrieving and applying the linux-rt patchset\n######\n"
 if [ "$RT" = true ]; then
 	patch_branch=$(echo ${RT_PATCH} | cut -d . -f 1-2 )
 	wget "http://cdn.kernel.org/pub/linux/kernel/projects/rt/${patch_branch}/older/patch-${RT_PATCH}.patch.gz" -O /linux-rt.patch.gz
 	cd /linux
-	gzip -cd /linux-rt.patch.gz | patch -p1 --verbose
+	gzip -cd /linux-rt.patch.gz | patch -p1
 fi
 
-# Prepare build
+# Prepare the environment and config
+echo -e "\n######\n Stage 2/4: preparing the environment and config\n######\n"
 if [ "$ARM64" = true ]; then
 	export ARCH=arm64
 	export KPKG_ARCH=arm64
@@ -102,6 +105,7 @@ cd /linux
 make -j`nproc` bcm2711_defconfig
 
 # Optionally: Patch config for RT
+echo -e "\n######\n Stage 2.1/4: applying the linux-rt patchset\n######\n"
 if [ "$RT" = true ]; then
 	cd /linux
 	cp .config .config.nonrt
@@ -111,6 +115,7 @@ if [ "$RT" = true ]; then
 fi
 
 # Build the kernel
+echo -e "\n######\n Stage 3/4: building the Linux kernel\n######\n"
 cd /linux
 # Plain build (disabled)
 # make -j`nproc`
@@ -120,4 +125,7 @@ if [ -n "${APPEND}" ]; then
 	KPKG_ARGS="${KPKG_ARGS} --append-to-version=${APPEND}"
 fi
 make-kpkg ${KPKG_ARGS} kernel_image kernel_headers kernel_source
+
+echo -e "\n######\n Stage 4/4: saving the packages\n######\n"
+mkdir -p /packages
 cp /*.deb /packages/
